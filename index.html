@@ -1,0 +1,1459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Artificial Neural Networks — Study Notes</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,600;0,700;1,300&family=IBM+Plex+Serif:wght@400;600&display=swap');
+
+  :root {
+    --bg: #0d0f14;
+    --surface: #13161e;
+    --surface2: #1a1e2a;
+    --border: #252a38;
+    --accent: #5b8def;
+    --accent2: #e06c75;
+    --accent3: #56b6c2;
+    --accent4: #e5c07b;
+    --accent5: #98c379;
+    --text: #abb2bf;
+    --text-bright: #e6edf3;
+    --text-dim: #5c6370;
+    --tag-bg: #1d2233;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+    min-height: 100vh;
+  }
+
+  /* ─── HERO ─── */
+  .hero {
+    background: linear-gradient(135deg, #0d0f14 0%, #111522 50%, #0d1220 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 56px 48px 48px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 340px; height: 340px;
+    background: radial-gradient(circle, rgba(91,141,239,.13) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  .hero-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: .18em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  .hero h1 {
+    font-family: 'IBM Plex Serif', serif;
+    font-size: clamp(28px, 4vw, 48px);
+    font-weight: 600;
+    color: var(--text-bright);
+    line-height: 1.15;
+    margin-bottom: 16px;
+  }
+  .hero h1 span { color: var(--accent); }
+  .hero p {
+    max-width: 680px;
+    color: var(--text);
+    font-weight: 300;
+    font-size: 15.5px;
+  }
+  .hero-meta {
+    display: flex;
+    gap: 24px;
+    margin-top: 28px;
+    flex-wrap: wrap;
+  }
+  .hero-meta span {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    color: var(--text-dim);
+  }
+  .hero-meta span b { color: var(--accent4); }
+
+  /* ─── TOC ─── */
+  .toc-bar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 48px;
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .toc-bar::-webkit-scrollbar { display: none; }
+  .toc-item {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    color: var(--text-dim);
+    padding: 14px 18px;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    white-space: nowrap;
+    text-decoration: none;
+    transition: color .2s, border-color .2s;
+  }
+  .toc-item:hover { color: var(--text-bright); border-color: var(--accent); }
+  .toc-item.active { color: var(--accent); border-color: var(--accent); }
+
+  /* ─── MAIN LAYOUT ─── */
+  .main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 48px 48px 80px;
+  }
+
+  /* ─── SECTION ─── */
+  .section {
+    margin-bottom: 64px;
+  }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 28px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    background: rgba(91,141,239,.1);
+    border: 1px solid rgba(91,141,239,.25);
+    padding: 3px 8px;
+    border-radius: 4px;
+  }
+  .section-title {
+    font-family: 'IBM Plex Serif', serif;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--text-bright);
+  }
+
+  /* ─── SUBSECTION ─── */
+  .subsection {
+    margin-bottom: 36px;
+  }
+  .subsection-title {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 13.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--accent3);
+    margin-bottom: 14px;
+  }
+
+  /* ─── CONTENT ─── */
+  p { margin-bottom: 12px; color: var(--text); }
+  ul, ol { padding-left: 22px; margin-bottom: 12px; }
+  li { margin-bottom: 6px; }
+  strong { color: var(--text-bright); font-weight: 600; }
+  em { color: var(--accent4); font-style: italic; }
+
+  /* ─── FORMULA BOX ─── */
+  .formula-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 6px;
+    padding: 20px 24px;
+    margin: 18px 0;
+    overflow-x: auto;
+  }
+  .formula-box .formula-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    letter-spacing: .12em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: block;
+  }
+  .formula {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14.5px;
+    color: #c8d3f5;
+    line-height: 1.9;
+  }
+  .formula-note {
+    font-size: 12.5px;
+    color: var(--text-dim);
+    margin-top: 8px;
+    font-style: italic;
+  }
+
+  /* ─── CARD GRID ─── */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+    margin: 18px 0;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+  .card.blue::before  { background: var(--accent); }
+  .card.red::before   { background: var(--accent2); }
+  .card.teal::before  { background: var(--accent3); }
+  .card.yellow::before { background: var(--accent4); }
+  .card.green::before { background: var(--accent5); }
+  .card-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-bright);
+    margin-bottom: 8px;
+  }
+  .card-body { font-size: 13.5px; color: var(--text); }
+  .card-formula {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    color: #c8d3f5;
+    background: var(--tag-bg);
+    padding: 6px 10px;
+    border-radius: 4px;
+    margin: 10px 0 6px;
+    display: inline-block;
+  }
+  .card-range {
+    font-size: 12px;
+    color: var(--text-dim);
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  /* ─── DIAGRAM ─── */
+  .diagram-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px;
+    margin: 20px 0;
+    overflow-x: auto;
+  }
+  .diagram-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: .12em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 18px;
+  }
+  svg text { font-family: 'IBM Plex Mono', monospace; }
+
+  /* ─── TABLE ─── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 18px 0;
+    font-size: 13.5px;
+  }
+  th {
+    background: var(--surface2);
+    color: var(--text-bright);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    font-weight: 600;
+    padding: 12px 16px;
+    text-align: left;
+    border: 1px solid var(--border);
+  }
+  td {
+    padding: 11px 16px;
+    border: 1px solid var(--border);
+    color: var(--text);
+    vertical-align: top;
+  }
+  tr:nth-child(even) td { background: var(--surface); }
+  td code {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    color: var(--accent4);
+    background: var(--tag-bg);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+
+  /* ─── CALLOUT ─── */
+  .callout {
+    display: flex;
+    gap: 14px;
+    padding: 16px 20px;
+    border-radius: 6px;
+    margin: 18px 0;
+    font-size: 13.5px;
+  }
+  .callout.note   { background: rgba(91,141,239,.08); border: 1px solid rgba(91,141,239,.2); }
+  .callout.warn   { background: rgba(224,108,117,.08); border: 1px solid rgba(224,108,117,.2); }
+  .callout.tip    { background: rgba(152,195,121,.08); border: 1px solid rgba(152,195,121,.2); }
+  .callout-icon { font-size: 16px; flex-shrink: 0; line-height: 1.6; }
+  .callout.note .callout-text { color: #9db8f0; }
+  .callout.warn .callout-text { color: #e89aa0; }
+  .callout.tip  .callout-text { color: #a8d490; }
+
+  /* ─── CHART AREA ─── */
+  .chart-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin: 20px 0;
+  }
+  .chart-cell {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    text-align: center;
+  }
+  .chart-cell .chart-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    margin-bottom: 10px;
+  }
+
+  /* ─── BADGE ─── */
+  .badge {
+    display: inline-block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    margin-right: 4px;
+    font-weight: 600;
+  }
+  .badge.blue   { background: rgba(91,141,239,.15);  color: var(--accent); }
+  .badge.red    { background: rgba(224,108,117,.15); color: var(--accent2); }
+  .badge.teal   { background: rgba(86,182,194,.15);  color: var(--accent3); }
+  .badge.yellow { background: rgba(229,192,123,.15); color: var(--accent4); }
+  .badge.green  { background: rgba(152,195,121,.15); color: var(--accent5); }
+
+  /* ─── STEP LIST ─── */
+  .step-list { list-style: none; padding: 0; margin: 14px 0; }
+  .step-list li {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 12px;
+    align-items: flex-start;
+  }
+  .step-num {
+    background: rgba(91,141,239,.15);
+    color: var(--accent);
+    border: 1px solid rgba(91,141,239,.3);
+    border-radius: 50%;
+    width: 24px; height: 24px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .step-content { font-size: 13.5px; }
+
+  /* ─── COMPARISON TABLE WRAPPER ─── */
+  .table-scroll { overflow-x: auto; }
+
+  /* ─── DIVIDER ─── */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+
+  /* ─── FOOTER ─── */
+  .footer {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 24px 48px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    color: var(--text-dim);
+    text-align: center;
+  }
+
+  /* ─── SCROLLBAR ─── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  @media (max-width: 700px) {
+    .hero, .main, .footer { padding-left: 20px; padding-right: 20px; }
+    .toc-bar { padding: 0 20px; }
+    .card-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ HERO ═══════════════ -->
+<div class="hero">
+  <div class="hero-label">// Course Notes · Deep Learning Series</div>
+  <h1>Artificial <span>Neural</span> Networks</h1>
+  <p>Comprehensive study notes covering AI foundations, knowledge representation, learning algorithms, neural architecture, activation functions, error metrics, training strategies, and deep learning patterns.</p>
+  <div class="hero-meta">
+    <span>Topics Covered: <b>10</b></span>
+    <span>Source: <b>Handwritten Lecture Notes (227 pp)</b></span>
+    <span>Supplemented: <b>Web Research</b></span>
+    <span>Date: <b>2024–2025</b></span>
+  </div>
+</div>
+
+<!-- ═══════════════ TOC ═══════════════ -->
+<nav class="toc-bar">
+  <a href="#s1" class="toc-item active">1. AI Foundations</a>
+  <a href="#s2" class="toc-item">2. Knowledge</a>
+  <a href="#s3" class="toc-item">3. Learning</a>
+  <a href="#s4" class="toc-item">4. Data Prep</a>
+  <a href="#s5" class="toc-item">5. Error & Loss</a>
+  <a href="#s6" class="toc-item">6. Neuron Model</a>
+  <a href="#s7" class="toc-item">7. Activation Fns</a>
+  <a href="#s8" class="toc-item">8. Network Arch.</a>
+  <a href="#s9" class="toc-item">9. Training</a>
+  <a href="#s10" class="toc-item">10. Deep Patterns</a>
+</nav>
+
+<main class="main">
+
+<!-- ═══════════════ SECTION 1 ═══════════════ -->
+<section class="section" id="s1">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <span class="section-title">Artificial Intelligence — Foundations</span>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">What is Intelligence?</div>
+    <ul>
+      <li><strong>Intelligence is not absolute</strong> — it is comparative and always depends on context. A beggar may be more intelligent than a professor <em>in the context of begging</em> (expert in that environment).</li>
+      <li>Humans are not universally intelligent — intelligence depends on domain knowledge; people have different expertises.</li>
+      <li>Can an LLM understand what we are saying? <strong>No</strong> — it processes patterns without genuine comprehension.</li>
+      <li>There are many ways to define AI, so any perspective should not be discouraged. We need algorithms to simulate intelligent concepts drawing from maths, biology, and neuroscience.</li>
+    </ul>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">AI Definition & Implementation</div>
+    <p>AI is <strong>the science and engineering of making intelligent machines</strong>, especially intelligent computer programs / intelligent agents. It is related to the similar task of using computers to understand human intelligence.</p>
+
+    <div class="card-grid">
+      <div class="card blue">
+        <div class="card-title">① Perceive & Understand</div>
+        <div class="card-body">Ability to perceive and understand the world based on available knowledge models. Percieveness is not isolated — it is connected with the knowledge model.</div>
+      </div>
+      <div class="card teal">
+        <div class="card-title">② Inferencing on Knowledge</div>
+        <div class="card-body">Perform reasoning on accumulated knowledge to achieve objectives and goals. Produce decisions. Includes <em>Learning & Adaptation</em>.</div>
+      </div>
+      <div class="card yellow">
+        <div class="card-title">③ Planning & Execution</div>
+        <div class="card-body">Generate a plan of actions to execute decisions on the environment. Once reasoning is done, execution is easier.</div>
+      </div>
+    </div>
+
+    <div class="callout note">
+      <span class="callout-icon">💡</span>
+      <span class="callout-text"><strong>Key Insight:</strong> Percieveness depends on context — it shows what we want to see. It is defined by our desires and our knowledge model. The same object (e.g., a pen) is perceived differently by a doctor, a child, or an artist.</span>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Key AI Techniques</div>
+    <div class="card-grid">
+      <div class="card blue">
+        <div class="card-title">Machine Learning</div>
+        <div class="card-body">Techniques that create knowledge models on machines by using structured and unstructured datasets. NLP &amp; Computer Vision are based on percieveness.</div>
+      </div>
+      <div class="card red">
+        <div class="card-title">Multiagent Systems</div>
+        <div class="card-body">Modelling complex systems whose behaviour is intrinsically difficult to model due to dependencies — uses large numbers of autonomous agents.</div>
+      </div>
+      <div class="card teal">
+        <div class="card-title">Evolutionary Computing</div>
+        <div class="card-body">Based on Darwin's principles of natural selection. Mainly used for heuristic optimisation.</div>
+      </div>
+      <div class="card yellow">
+        <div class="card-title">Natural Language Processing</div>
+        <div class="card-body">Gives machines the ability to read, understand and derive meaning from human languages. Speech processing: listen, percieve, then talk.</div>
+      </div>
+      <div class="card green">
+        <div class="card-title">Fuzzy Logic</div>
+        <div class="card-body">Also known as multi-valued knowledge. Handles uncertainty from imprecision and imperfect knowledge.</div>
+      </div>
+      <div class="card blue">
+        <div class="card-title">Cognitive / Expert Systems</div>
+        <div class="card-body">Knowledge representation in terms of symbolic logics. Simulates the judgement of human decision processes.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ SECTION 2 ═══════════════ -->
+<section class="section" id="s2">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <span class="section-title">Knowledge Representation</span>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Two Types of Knowledge Representations</div>
+    <div class="card-grid">
+      <div class="card teal">
+        <div class="card-title">1. Rules &amp; Facts</div>
+        <div class="card-body">IF-THEN rule sets. Example: <em>If there is a vehicle on the left → check your right.</em> Fuzzy logic and expert systems are rule-based knowledge models.</div>
+      </div>
+      <div class="card yellow">
+        <div class="card-title">2. Data-Oriented Models</div>
+        <div class="card-body">Knowledge represented as tabular data, mathematical functions, graphs/images, or probability distributions. No fixed format — we can develop our own knowledge base.</div>
+      </div>
+    </div>
+    <div class="callout note">
+      <span class="callout-icon">📌</span>
+      <span class="callout-text">Having a proper knowledge model allows us to do better reasoning. If we don't have a proper knowledge model, understanding is also weak. Reasoning is stronger when the knowledge model is very strong; reasoning is weak when the knowledge model is weak.</span>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Decision Tree Example — Road Crossing</div>
+    <div class="diagram-wrap">
+      <div class="diagram-title">// Rule-based knowledge: crossing the road</div>
+      <svg viewBox="0 0 600 240" width="100%" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+            <path d="M0,0 L8,4 L0,8 Z" fill="#5b8def" opacity=".7"/>
+          </marker>
+        </defs>
+        <!-- Root -->
+        <rect x="210" y="10" width="180" height="40" rx="6" fill="#1a1e2a" stroke="#5b8def" stroke-width="1.2"/>
+        <text x="300" y="35" fill="#c8d3f5" font-size="12" text-anchor="middle">Vehicle on LEFT?</text>
+        <!-- Yes / No -->
+        <line x1="260" y1="50" x2="160" y2="100" stroke="#5b8def" stroke-width="1" marker-end="url(#arr)" opacity=".6"/>
+        <line x1="340" y1="50" x2="440" y2="100" stroke="#5b8def" stroke-width="1" marker-end="url(#arr)" opacity=".6"/>
+        <text x="195" y="85" fill="#98c379" font-size="11" text-anchor="middle">YES</text>
+        <text x="410" y="85" fill="#e06c75" font-size="11" text-anchor="middle">NO</text>
+        <!-- Left branch: Wait -->
+        <rect x="90" y="100" width="140" height="40" rx="6" fill="#1a1e2a" stroke="#98c379" stroke-width="1.2"/>
+        <text x="160" y="125" fill="#98c379" font-size="12" text-anchor="middle">WAIT</text>
+        <!-- Right branch -->
+        <rect x="370" y="100" width="180" height="40" rx="6" fill="#1a1e2a" stroke="#56b6c2" stroke-width="1.2"/>
+        <text x="460" y="125" fill="#c8d3f5" font-size="12" text-anchor="middle">Vehicle on RIGHT?</text>
+        <line x1="420" y1="140" x2="360" y2="190" stroke="#5b8def" stroke-width="1" marker-end="url(#arr)" opacity=".6"/>
+        <line x1="500" y1="140" x2="540" y2="190" stroke="#5b8def" stroke-width="1" marker-end="url(#arr)" opacity=".6"/>
+        <text x="383" y="178" fill="#98c379" font-size="11" text-anchor="middle">YES</text>
+        <text x="527" y="178" fill="#e06c75" font-size="11" text-anchor="middle">NO</text>
+        <rect x="295" y="190" width="120" height="36" rx="6" fill="#1a1e2a" stroke="#98c379" stroke-width="1.2"/>
+        <text x="355" y="213" fill="#98c379" font-size="12" text-anchor="middle">WAIT</text>
+        <rect x="475" y="190" width="120" height="36" rx="6" fill="#1a1e2a" stroke="#e5c07b" stroke-width="1.2"/>
+        <text x="535" y="213" fill="#e5c07b" font-size="12" text-anchor="middle">CROSS ✓</text>
+      </svg>
+    </div>
+    <p>Knowledge can also be represented as data tables — e.g., columns: <code>left</code>, <code>right</code>, <code>distance</code>, <code>time</code>. We can also represent knowledge as graphs, images, or probability distributions.</p>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Accuracy vs Speed Trade-off in Knowledge</div>
+    <ul>
+      <li>When developing a knowledge model, consider: <strong>how fast to retrieve</strong>, how fast to store, and accuracy.</li>
+      <li>Short instructions are easy to develop but accuracy is low (it indirectly says what should be there).</li>
+      <li>Long, detailed instructions take longer to retrieve, but are <strong>more accurate</strong>.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ═══════════════ SECTION 3 ═══════════════ -->
+<section class="section" id="s3">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <span class="section-title">Learning — What It Is & How It Works</span>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Definitions</div>
+    <ul>
+      <li><strong>Learning</strong> = developing a process that develops a knowledge model.</li>
+      <li><strong>Data</strong> = nothing but experiences. When you get an experience, you apply your existing knowledge model, get an output, receive feedback, and update the knowledge model.</li>
+      <li>The more experience in an environment, the more confident you become.</li>
+      <li>Getting the input, updating the knowledge model from experiences, and improving the model is called the <em>learning process</em>.</li>
+    </ul>
+    <div class="formula-box">
+      <span class="formula-label">// Linear model learning (regression)</span>
+      <div class="formula">
+        u = mx + c<br>
+        ŷ = u          → identity function<br>
+        y = mx + c     → knowledge model<br><br>
+        ŷ = m̂x + ĉ     → knowledge model updated continuously<br>
+                          to find best-fitted m & c values<br>
+                          to explain the behaviour of data
+      </div>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Types of Learning Algorithms</div>
+    <div class="table-scroll">
+      <table>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Approach</th>
+        </tr>
+        <tr>
+          <td><span class="badge blue">Supervised</span></td>
+          <td>Learn from labelled past experiences</td>
+          <td>Train on known input-output pairs, test on unseen data</td>
+        </tr>
+        <tr>
+          <td><span class="badge teal">Unsupervised</span></td>
+          <td>Discover structure without labels</td>
+          <td>Clustering, dimensionality reduction</td>
+        </tr>
+        <tr>
+          <td><span class="badge yellow">Reinforcement</span></td>
+          <td>Agent learns via reward/penalty signals</td>
+          <td>Dynamic environment; delayed rewards matter more than immediate ones</td>
+        </tr>
+        <tr>
+          <td><span class="badge green">Semi-supervised</span></td>
+          <td>Mix of labelled and unlabelled data</td>
+          <td>Useful when labelling is expensive</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="subsection-title" style="margin-top:24px;">Train / Test / Future Split</div>
+    <div class="diagram-wrap">
+      <div class="diagram-title">// Dataset split over time</div>
+      <svg viewBox="0 0 600 80" width="100%" xmlns="http://www.w3.org/2000/svg">
+        <rect x="10"  y="20" width="270" height="40" rx="4" fill="rgba(91,141,239,.15)" stroke="#5b8def" stroke-width="1"/>
+        <rect x="285" y="20" width="160" height="40" rx="4" fill="rgba(86,182,194,.15)" stroke="#56b6c2" stroke-width="1"/>
+        <rect x="450" y="20" width="140" height="40" rx="4" fill="rgba(229,192,123,.15)" stroke="#e5c07b" stroke-width="1"/>
+        <text x="145" y="45" fill="#9db8f0" font-size="12" text-anchor="middle">Training  x₁ … x₈</text>
+        <text x="365" y="45" fill="#56b6c2" font-size="12" text-anchor="middle">Testing  x₉ x₁₀ x₁₁</text>
+        <text x="520" y="45" fill="#e5c07b" font-size="12" text-anchor="middle">Future</text>
+        <text x="145" y="68" fill="#5c6370" font-size="10" text-anchor="middle">← past →</text>
+        <text x="365" y="68" fill="#5c6370" font-size="10" text-anchor="middle">← present →</text>
+      </svg>
+    </div>
+    <div class="callout tip">
+      <span class="callout-icon">✅</span>
+      <span class="callout-text">Training updates the ML model (ML(Θ) → ML(Θ̂)). After updating with training data (x₁…x₈), the model is tested on x₉, x₁₀, x₁₁. If it performs badly, go back and train again.</span>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Reinforcement Learning Note</div>
+    <ul>
+      <li>In a dynamic environment, no action is strictly "best" in a given situation — because other agents are also changing their actions.</li>
+      <li>The negative immediate rewards are not the most important; <strong>later rewards matter more</strong>.</li>
+      <li>Same action could bring different rewards because of others' changing actions.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ═══════════════ SECTION 4 ═══════════════ -->
+<section class="section" id="s4">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <span class="section-title">Data Preparation</span>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Data Coding (Encoding)</div>
+    <p>Variables can have numerical or text values. When feeding text values to a neural network, everything must be expressed in 1s and 0s. Converting text values into numerical values is called <em>encoding</em>.</p>
+    <div class="card-grid">
+      <div class="card teal">
+        <div class="card-title">One-Hot Encoding</div>
+        <div class="card-body">Creates binary columns for each category. No ordinal relationship implied. E.g., [cat, dog, bird] → [1,0,0], [0,1,0], [0,0,1]. Best for nominal categorical data.</div>
+      </div>
+      <div class="card blue">
+        <div class="card-title">Integer (Label) Encoding</div>
+        <div class="card-body">Assigns integer values 1, 2, 3… to categories. Straightforward; does not expand feature space. Works well with tree-based algorithms. <strong>Problem:</strong> implies order that may not exist.</div>
+      </div>
+      <div class="card yellow">
+        <div class="card-title">Ordered Label Encoding</div>
+        <div class="card-body">Use when a monotonic relationship exists — e.g., preference: none &lt; low &lt; mid &lt; high. Integer encoding is suitable here because order matters.</div>
+      </div>
+    </div>
+    <div class="callout warn">
+      <span class="callout-icon">⚠️</span>
+      <span class="callout-text">When applying codings, choose carefully. For colour (no natural order), integer encoding is NOT suitable — it falsely implies 3 &gt; 2 &gt; 1. Use one-hot instead.</span>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Feature Scaling</div>
+    <p>Feature magnitude matters because: the scale of a variable directly influences regression coefficients, variables with larger magnitudes dominate, and gradient descent converges faster when features are on similar scales.</p>
+
+    <div class="card-grid">
+      <div class="card blue">
+        <div class="card-title">Standardization (Z-score)</div>
+        <div class="card-formula">x̄ = (x − mean(x)) / std(x)</div>
+        <div class="card-range">Range: approximately (−3, +3)</div>
+        <div class="card-body" style="margin-top:8px;">Centres data around 0 with unit variance. Robust for most algorithms.</div>
+      </div>
+      <div class="card red">
+        <div class="card-title">Min-Max Normalization</div>
+        <div class="card-formula">x̄ = (x − min(x)) / (max(x) − min(x))</div>
+        <div class="card-range">Range: [0, 1]</div>
+        <div class="card-body" style="margin-top:8px;">Scales to fixed range. <strong>Very sensitive to outliers.</strong></div>
+      </div>
+    </div>
+
+    <ul>
+      <li>Euclidean distances are sensitive to feature magnitude → always scale before KNN, SVM.</li>
+      <li>Feature scaling helps decrease the time to find support vectors for SVMs.</li>
+      <li>Gradient descent converges faster when features are on similar scales.</li>
+    </ul>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Custom Discretization</div>
+    <p>Discretization of continuous variables like <em>Age</em> — divide [0–10] as "kids", [10–25] as "teenagers", etc. Example using pandas:</p>
+    <div class="formula-box">
+      <span class="formula-label">// Python — pd.cut() discretization</span>
+      <div class="formula">
+        bins   = [0, 10, 25, 65, 250]<br>
+        labels = ['0-10', '10-25', '25-65', '>65']<br>
+        df['Age'] = pd.cut(df.Age, bins=bins,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;labels=labels,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;include_lowest=True)
+      </div>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Class Imbalance Handling</div>
+    <div class="card-grid">
+      <div class="card green">
+        <div class="card-title">Undersampling</div>
+        <div class="card-body"><strong>Tomek Links:</strong> Remove majority class samples that are closest to minority class. <strong>Near Miss:</strong> Select majority samples nearest to minority examples. <strong>Edited Nearest Neighbours:</strong> Drop majority points not in your boundary.</div>
+      </div>
+      <div class="card yellow">
+        <div class="card-title">Evaluation Metrics</div>
+        <div class="card-body">• <strong>Accuracy (Balanced)</strong> — balanced datasets<br>• <strong>AUC-ROC</strong> — slightly imbalanced<br>• <strong>Precision &amp; Recall / F1</strong> — significantly imbalanced</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ SECTION 5 ═══════════════ -->
+<section class="section" id="s5">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <span class="section-title">Error Functions & Loss</span>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Regression Error</div>
+    <div class="formula-box">
+      <span class="formula-label">// Sum of Squared Errors (SSE)</span>
+      <div class="formula">
+        e = real value − predicted value<br>
+        E = Σ e²<br><br>
+        Use error E to update θ (parameters).<br>
+        ΔΘ = update step proportional to E
+      </div>
+    </div>
+    <p>In regression: x<sub>i</sub> → KM(Θ) → ŷ compared against real y. Error drives parameter update.</p>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Classification Error</div>
+    <div class="formula-box">
+      <span class="formula-label">// Delta / Indicator Error (Classification)</span>
+      <div class="formula">
+        e = δ(ŷ − y)<br><br>
+        If ŷ and y are the same → δ(ŷ, y) = 0<br>
+        If ŷ and y are different → δ(ŷ, y) ≠ 0
+      </div>
+    </div>
+    <p>Decision boundary: y = θ̂₁x₁ + θ̂₂x₂ + ĉ. Anything above the line is one class, below is another.</p>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Confusion Matrix & Key Metrics</div>
+    <div class="diagram-wrap">
+      <div class="diagram-title">// Confusion Matrix</div>
+      <svg viewBox="0 0 420 200" width="100%" xmlns="http://www.w3.org/2000/svg">
+        <!-- Headers -->
+        <text x="250" y="30" fill="#5c6370" font-size="11" text-anchor="middle">Predicted</text>
+        <text x="250" y="48" fill="#abb2bf" font-size="11" text-anchor="middle">P (Positive)</text>
+        <text x="360" y="48" fill="#abb2bf" font-size="11" text-anchor="middle">N (Negative)</text>
+        <text x="100" y="90" fill="#abb2bf" font-size="11" text-anchor="middle">T (True)</text>
+        <text x="100" y="150" fill="#abb2bf" font-size="11" text-anchor="middle">F (False)</text>
+        <text x="50" y="115" fill="#5c6370" font-size="11" text-anchor="middle" transform="rotate(-90,50,115)">Actual</text>
+        <!-- Cells -->
+        <rect x="190" y="58" width="110" height="55" rx="3" fill="rgba(152,195,121,.12)" stroke="#98c379" stroke-width="1"/>
+        <text x="245" y="90" fill="#98c379" font-size="13" font-weight="600" text-anchor="middle">TP</text>
+        <rect x="305" y="58" width="110" height="55" rx="3" fill="rgba(224,108,117,.12)" stroke="#e06c75" stroke-width="1"/>
+        <text x="360" y="90" fill="#e06c75" font-size="13" font-weight="600" text-anchor="middle">FN</text>
+        <rect x="190" y="118" width="110" height="55" rx="3" fill="rgba(224,108,117,.12)" stroke="#e06c75" stroke-width="1"/>
+        <text x="245" y="150" fill="#e06c75" font-size="13" font-weight="600" text-anchor="middle">FP</text>
+        <rect x="305" y="118" width="110" height="55" rx="3" fill="rgba(152,195,121,.12)" stroke="#98c379" stroke-width="1"/>
+        <text x="360" y="150" fill="#98c379" font-size="13" font-weight="600" text-anchor="middle">TN</text>
+      </svg>
+    </div>
+    <div class="formula-box">
+      <span class="formula-label">// Key Classification Metrics</span>
+      <div class="formula">
+        Accuracy  = (TP + TN) / (TP + TN + FP + FN)<br>
+        Precision = TP / (TP + FP)<br>
+        Recall    = TP / (TP + FN)<br>
+        F1 Score  = 2 × (Precision × Recall) / (Precision + Recall)<br><br>
+        FN ∝ 1/FP  (FN is inverse proportional to FP)<br>
+        In reality, FN never will be zero.<br>
+        Goal: minimise both FP &amp; FN.
+      </div>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Perceptron Learning Rule</div>
+    <div class="formula-box">
+      <span class="formula-label">// Perceptron Weight Update Rule</span>
+      <div class="formula">
+        w(t+1) = w(t) + η · [y(t) − ŷ(t)] · x(t)<br><br>
+        where:<br>
+        η  = learning rate<br>
+        y  = true label<br>
+        ŷ  = predicted output (using sgn function)<br>
+        x  = input vector<br><br>
+        z  = wx + b<br>
+        y  = sgn(z)    where sgn(z) = +1 if z ≥ 0, else −1
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ SECTION 6 ═══════════════ -->
+<section class="section" id="s6">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <span class="section-title">The Neuron Model</span>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Biological Inspiration</div>
+    <p>The artificial neuron is inspired by biological neurons. Inter-neuron connection strengths (weights) are used to store acquired knowledge. Inputs are received, weighted, summed, and passed through an activation function.</p>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Single Neuron Architecture</div>
+    <div class="diagram-wrap">
+      <div class="diagram-title">// Single artificial neuron (with bias)</div>
+      <svg viewBox="0 0 580 180" width="100%" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arr2" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+            <path d="M0,0 L8,4 L0,8 Z" fill="#5b8def" opacity=".8"/>
+          </marker>
+        </defs>
+        <!-- Inputs -->
+        <text x="30" y="40"  fill="#abb2bf" font-size="12">x₁</text>
+        <text x="30" y="90"  fill="#abb2bf" font-size="12">x₂</text>
+        <text x="30" y="140" fill="#abb2bf" font-size="12">xₙ</text>
+        <text x="30" y="165" fill="#5c6370" font-size="10">+1 (bias)</text>
+        <!-- Weight labels -->
+        <text x="90"  y="55"  fill="#e5c07b" font-size="11">w₁</text>
+        <text x="90"  y="88"  fill="#e5c07b" font-size="11">w₂</text>
+        <text x="90"  y="130" fill="#e5c07b" font-size="11">wₙ</text>
+        <text x="90"  y="158" fill="#e5c07b" font-size="11">w₀ (bias)</text>
+        <!-- Lines to neuron -->
+        <line x1="50" y1="38" x2="210" y2="80" stroke="#5b8def" stroke-width="1.2" marker-end="url(#arr2)" opacity=".7"/>
+        <line x1="50" y1="88" x2="210" y2="90" stroke="#5b8def" stroke-width="1.2" marker-end="url(#arr2)" opacity=".7"/>
+        <line x1="50" y1="138" x2="210" y2="100" stroke="#5b8def" stroke-width="1.2" marker-end="url(#arr2)" opacity=".7"/>
+        <line x1="50" y1="163" x2="210" y2="108" stroke="#56b6c2" stroke-width="1.2" marker-end="url(#arr2)" opacity=".7"/>
+        <!-- Summation circle -->
+        <circle cx="240" cy="90" r="32" fill="#1a1e2a" stroke="#5b8def" stroke-width="1.5"/>
+        <text x="232" y="88" fill="#c8d3f5" font-size="14">Σ</text>
+        <text x="232" y="104" fill="#56b6c2" font-size="10">u</text>
+        <!-- Arrow to activation -->
+        <line x1="272" y1="90" x2="330" y2="90" stroke="#5b8def" stroke-width="1.5" marker-end="url(#arr2)"/>
+        <!-- Activation circle -->
+        <circle cx="360" cy="90" r="28" fill="#1a1e2a" stroke="#e5c07b" stroke-width="1.5"/>
+        <text x="354" y="95" fill="#e5c07b" font-size="12">f</text>
+        <!-- Output -->
+        <line x1="388" y1="90" x2="460" y2="90" stroke="#5b8def" stroke-width="1.5" marker-end="url(#arr2)"/>
+        <text x="466" y="95" fill="#c8d3f5" font-size="13">y</text>
+        <!-- Formulas -->
+        <text x="30" y="195" fill="#5c6370" font-size="11">not shown</text>
+      </svg>
+    </div>
+    <div class="formula-box">
+      <span class="formula-label">// Neuron computation</span>
+      <div class="formula">
+        u = x₁w₁ + x₂w₂ + ... + xₙwₙ        (weighted sum)<br>
+        V = u + b       (with bias)<br>
+        V = w·xᵀ + b   (matrix form with bias)<br>
+        V = wx          (without bias term)<br><br>
+        y = f(u)        (output = activation function applied to weighted sum)
+      </div>
+    </div>
+    <div class="formula-box">
+      <span class="formula-label">// Weight matrix initialization</span>
+      <div class="formula">
+        W^input   → shape: (d+1) × #receiving_neurons<br>
+        W^output  → shape: 1 × #neurons<br><br>
+        w¹ = [w₀  w₁  w₂  w₃]     (row vector, 1×(d+1))<br>
+        b¹ = [w₀]₁ₓ₁<br>
+        xᵀ = [x₁  x₂  x₃]         (1×d row)
+      </div>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Parallel vs Sequential Processing</div>
+    <ul>
+      <li><strong>Within a layer (L₁):</strong> neurons process information <em>in parallel</em> — we can calculate y₂, y₃, y₁ simultaneously since we know inputs x₁ to xₙ.</li>
+      <li><strong>Across layers:</strong> processing is <em>sequential</em> — layer 1 output feeds layer 2.</li>
+      <li>There is no restriction to connect neurons parallelly (parallel processing).</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ═══════════════ SECTION 7 ═══════════════ -->
+<section class="section" id="s7">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <span class="section-title">Activation Functions</span>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Why Activation Functions?</div>
+    <p>Activation functions introduce <strong>non-linearity</strong> into the network. Without them, the entire network collapses to a single linear transformation no matter how many layers exist. Hidden layers bring "non-linearity" to the network.</p>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Core Activation Functions</div>
+    <div class="card-grid">
+      <div class="card blue">
+        <div class="card-title">Sigmoid (Logistic)</div>
+        <div class="card-formula">σ(x) = 1 / (1 + e⁻ˣ)</div>
+        <div class="card-range">Range: (0, 1) · S-shaped curve</div>
+        <div class="card-body" style="margin-top:8px;">
+          Used for <strong>binary classification output</strong>. Smooth, differentiable.<br>
+          <span class="badge red">Vanishing gradient</span> in deep nets — gradients become very small.
+        </div>
+      </div>
+      <div class="card teal">
+        <div class="card-title">Tanh (Hyperbolic Tangent)</div>
+        <div class="card-formula">tanh(x) = (eˣ − e⁻ˣ) / (eˣ + e⁻ˣ)</div>
+        <div class="card-range">Range: (−1, +1) · Zero-centred</div>
+        <div class="card-body" style="margin-top:8px;">
+          Used in <strong>hidden layers</strong> when zero-centred output needed. Stronger gradients than sigmoid near zero.<br>
+          <span class="badge red">Vanishing gradient</span> still present in very deep nets.
+        </div>
+      </div>
+      <div class="card green">
+        <div class="card-title">ReLU (Rectified Linear Unit)</div>
+        <div class="card-formula">f(x) = max(0, x)</div>
+        <div class="card-range">Range: [0, +∞)</div>
+        <div class="card-body" style="margin-top:8px;">
+          <strong>Default for hidden layers</strong> in modern networks. Computationally cheap; avoids vanishing gradient.<br>
+          <span class="badge red">Dying ReLU</span> — neurons can get stuck outputting 0 forever.
+        </div>
+      </div>
+      <div class="card yellow">
+        <div class="card-title">Leaky ReLU</div>
+        <div class="card-formula">f(x) = max(αx, x)  (α ≈ 0.01)</div>
+        <div class="card-range">Range: (−∞, +∞)</div>
+        <div class="card-body" style="margin-top:8px;">
+          Fixes Dying ReLU by allowing small negative slope. Enables backpropagation even for negative inputs.
+        </div>
+      </div>
+      <div class="card red">
+        <div class="card-title">Softmax</div>
+        <div class="card-formula">σ(xᵢ) = eˣⁱ / Σⱼ eˣʲ</div>
+        <div class="card-range">Range: (0,1), sums to 1</div>
+        <div class="card-body" style="margin-top:8px;">
+          Used at the <strong>output layer for multi-class classification</strong>. Converts raw scores to probability distribution. Outputs are interrelated (not independent like sigmoid).
+        </div>
+      </div>
+      <div class="card blue">
+        <div class="card-title">Signum (Sign Function)</div>
+        <div class="card-formula">sgn(z) = +1 if z≥0, else −1</div>
+        <div class="card-range">Range: {−1, +1}</div>
+        <div class="card-body" style="margin-top:8px;">
+          Used in <strong>perceptron</strong> (binary hard threshold). Not differentiable at 0; not usable with backprop.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Activation Function Curves</div>
+    <div class="chart-row">
+      <div class="chart-cell">
+        <div class="chart-label">Sigmoid</div>
+        <svg viewBox="0 0 160 100" width="100%">
+          <line x1="10" y1="50" x2="150" y2="50" stroke="#252a38" stroke-width="1"/>
+          <line x1="80" y1="5" x2="80" y2="95" stroke="#252a38" stroke-width="1"/>
+          <path d="M10,88 Q40,85 60,70 Q75,57 80,50 Q85,43 100,30 Q120,15 150,12" stroke="#5b8def" stroke-width="2" fill="none"/>
+          <text x="80" y="98" fill="#5c6370" font-size="9" text-anchor="middle">0→1</text>
+        </svg>
+      </div>
+      <div class="chart-cell">
+        <div class="chart-label">Tanh</div>
+        <svg viewBox="0 0 160 100" width="100%">
+          <line x1="10" y1="50" x2="150" y2="50" stroke="#252a38" stroke-width="1"/>
+          <line x1="80" y1="5" x2="80" y2="95" stroke="#252a38" stroke-width="1"/>
+          <path d="M10,82 Q40,78 60,65 Q75,53 80,50 Q85,47 100,35 Q120,22 150,18" stroke="#56b6c2" stroke-width="2" fill="none"/>
+          <text x="80" y="98" fill="#5c6370" font-size="9" text-anchor="middle">−1→+1</text>
+        </svg>
+      </div>
+      <div class="chart-cell">
+        <div class="chart-label">ReLU</div>
+        <svg viewBox="0 0 160 100" width="100%">
+          <line x1="10" y1="50" x2="150" y2="50" stroke="#252a38" stroke-width="1"/>
+          <line x1="80" y1="5" x2="80" y2="95" stroke="#252a38" stroke-width="1"/>
+          <path d="M10,50 L80,50 L150,10" stroke="#98c379" stroke-width="2" fill="none"/>
+          <text x="80" y="98" fill="#5c6370" font-size="9" text-anchor="middle">0→∞</text>
+        </svg>
+      </div>
+      <div class="chart-cell">
+        <div class="chart-label">Softmax (multi-class)</div>
+        <svg viewBox="0 0 160 100" width="100%">
+          <rect x="15" y="55" width="30" height="35" fill="rgba(91,141,239,.3)" stroke="#5b8def" stroke-width="1"/>
+          <rect x="55" y="30" width="30" height="60" fill="rgba(91,141,239,.5)" stroke="#5b8def" stroke-width="1"/>
+          <rect x="95" y="45" width="30" height="45" fill="rgba(91,141,239,.35)" stroke="#5b8def" stroke-width="1"/>
+          <text x="30"  y="100" fill="#5c6370" font-size="9" text-anchor="middle">C1</text>
+          <text x="70"  y="100" fill="#5c6370" font-size="9" text-anchor="middle">C2</text>
+          <text x="110" y="100" fill="#5c6370" font-size="9" text-anchor="middle">C3</text>
+          <text x="80"  y="20"  fill="#5c6370" font-size="9" text-anchor="middle">sums to 1</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">When to Use Which Activation Function</div>
+    <div class="table-scroll">
+      <table>
+        <tr>
+          <th>Layer / Task</th>
+          <th>Recommended</th>
+          <th>Reason</th>
+        </tr>
+        <tr>
+          <td>Hidden layers (general)</td>
+          <td><code>ReLU</code></td>
+          <td>Fast, sparse, avoids vanishing gradient</td>
+        </tr>
+        <tr>
+          <td>Hidden layers (zero-centred needed)</td>
+          <td><code>Tanh</code></td>
+          <td>Zero-centred output helps convergence</td>
+        </tr>
+        <tr>
+          <td>Binary classification output</td>
+          <td><code>Sigmoid</code></td>
+          <td>Outputs probability 0–1</td>
+        </tr>
+        <tr>
+          <td>Multi-class classification output</td>
+          <td><code>Softmax</code></td>
+          <td>Probability distribution over classes summing to 1</td>
+        </tr>
+        <tr>
+          <td>Regression output</td>
+          <td><code>Linear / None</code></td>
+          <td>Output can be any real number</td>
+        </tr>
+        <tr>
+          <td>Perceptron (hard threshold)</td>
+          <td><code>Signum</code></td>
+          <td>Binary ±1 decision</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Vanishing Gradient Problem</div>
+    <div class="callout warn">
+      <span class="callout-icon">⚠️</span>
+      <span class="callout-text">In deep networks with Sigmoid or Tanh, gradients can become extremely small during backpropagation, making it difficult for early layers to learn. This is why <strong>ReLU is preferred for hidden layers</strong> in modern deep networks.</span>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Matrix Computation Example (2-layer network with Tanh)</div>
+    <div class="formula-box">
+      <span class="formula-label">// Forward pass — hidden layer 1 (tanh activation)</span>
+      <div class="formula">
+        Z^[1]  = W^[1] · X^[1] + b^[1]     (2×d · d×1 + 2×1 = 2×1)<br>
+        Y^[1]  = tanh(Z^[1])                (element-wise operation)<br><br>
+        // Output layer (softmax/sigmoid)<br>
+        Z^[2]  = W^[2] · Y^[1] + b^[2]     (2×2 · 2×1 + 2×1 = 2×1)<br>
+        Y^[2]  = softmax(Z^[2])<br><br>
+        Note: activation functions are element-wise operations<br>
+        (go inside the matrix & apply them element by element)
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ SECTION 8 ═══════════════ -->
+<section class="section" id="s8">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <span class="section-title">Neural Network Architecture</span>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Multilayer Network Diagram</div>
+    <div class="diagram-wrap">
+      <div class="diagram-title">// Feedforward Neural Network (2 inputs → 2 hidden → 2 outputs)</div>
+      <svg viewBox="0 0 580 220" width="100%" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arr3" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto">
+            <path d="M0,0 L7,3.5 L0,7 Z" fill="#5b8def" opacity=".6"/>
+          </marker>
+        </defs>
+        <!-- Layer labels -->
+        <text x="70"  y="18" fill="#5c6370" font-size="10" text-anchor="middle">INPUT</text>
+        <text x="230" y="18" fill="#5c6370" font-size="10" text-anchor="middle">HIDDEN L1</text>
+        <text x="390" y="18" fill="#5c6370" font-size="10" text-anchor="middle">HIDDEN L2</text>
+        <text x="530" y="18" fill="#5c6370" font-size="10" text-anchor="middle">OUTPUT</text>
+
+        <!-- Input neurons -->
+        <circle cx="70" cy="80"  r="22" fill="#1a1e2a" stroke="#5b8def" stroke-width="1.5"/>
+        <text x="70" cy="80" y="84" fill="#abb2bf" font-size="11" text-anchor="middle">x₁</text>
+        <circle cx="70" cy="150" r="22" fill="#1a1e2a" stroke="#5b8def" stroke-width="1.5"/>
+        <text x="70" y="154" fill="#abb2bf" font-size="11" text-anchor="middle">x₂</text>
+
+        <!-- H1 neurons -->
+        <circle cx="230" cy="70"  r="22" fill="#1a1e2a" stroke="#56b6c2" stroke-width="1.5"/>
+        <text x="230" y="67" fill="#56b6c2" font-size="10" text-anchor="middle">Σ</text>
+        <text x="230" y="80" fill="#56b6c2" font-size="9" text-anchor="middle">tanh</text>
+        <circle cx="230" cy="145" r="22" fill="#1a1e2a" stroke="#56b6c2" stroke-width="1.5"/>
+        <text x="230" y="142" fill="#56b6c2" font-size="10" text-anchor="middle">Σ</text>
+        <text x="230" y="155" fill="#56b6c2" font-size="9" text-anchor="middle">tanh</text>
+
+        <!-- H2 neurons -->
+        <circle cx="390" cy="70"  r="22" fill="#1a1e2a" stroke="#e5c07b" stroke-width="1.5"/>
+        <text x="390" y="67" fill="#e5c07b" font-size="10" text-anchor="middle">Σ</text>
+        <text x="390" y="80" fill="#e5c07b" font-size="9" text-anchor="middle">tanh</text>
+        <circle cx="390" cy="145" r="22" fill="#1a1e2a" stroke="#e5c07b" stroke-width="1.5"/>
+        <text x="390" y="142" fill="#e5c07b" font-size="10" text-anchor="middle">Σ</text>
+        <text x="390" y="155" fill="#e5c07b" font-size="9" text-anchor="middle">tanh</text>
+
+        <!-- Output neurons -->
+        <circle cx="530" cy="80"  r="22" fill="#1a1e2a" stroke="#98c379" stroke-width="1.5"/>
+        <text x="530" y="75" fill="#98c379" font-size="9" text-anchor="middle">Σ</text>
+        <text x="530" y="87" fill="#98c379" font-size="9" text-anchor="middle">softmax</text>
+        <circle cx="530" cy="155" r="22" fill="#1a1e2a" stroke="#98c379" stroke-width="1.5"/>
+        <text x="530" y="150" fill="#98c379" font-size="9" text-anchor="middle">Σ</text>
+        <text x="530" y="162" fill="#98c379" font-size="9" text-anchor="middle">softmax</text>
+
+        <!-- Connections I→H1 -->
+        <line x1="92" y1="80"  x2="208" y2="73"  stroke="#5b8def" stroke-width=".8" opacity=".5" marker-end="url(#arr3)"/>
+        <line x1="92" y1="80"  x2="208" y2="145" stroke="#5b8def" stroke-width=".8" opacity=".5" marker-end="url(#arr3)"/>
+        <line x1="92" y1="150" x2="208" y2="73"  stroke="#5b8def" stroke-width=".8" opacity=".5" marker-end="url(#arr3)"/>
+        <line x1="92" y1="150" x2="208" y2="145" stroke="#5b8def" stroke-width=".8" opacity=".5" marker-end="url(#arr3)"/>
+
+        <!-- Connections H1→H2 -->
+        <line x1="252" y1="70"  x2="368" y2="70"  stroke="#56b6c2" stroke-width=".8" opacity=".5" marker-end="url(#arr3)"/>
+        <line x1="252" y1="70"  x2="368" y2="145" stroke="#56b6c2" stroke-width=".8" opacity=".5" marker-end="url(#arr3)"/>
+        <line x1="252" y1="145" x2="368" y2="70"  stroke="#56b6c2" stroke-width=".8" opacity=".5" marker-end="url(#arr3)"/>
+        <line x1="252" y1="145" x2="368" y2="145" stroke="#56b6c2" stroke-width=".8" opacity=".5" marker-end="url(#arr3)"/>
+
+        <!-- Connections H2→O -->
+        <line x1="412" y1="70"  x2="508" y2="82"  stroke="#e5c07b" stroke-width=".8" opacity=".5" marker-end="url(#arr3)"/>
+        <line x1="412" y1="70"  x2="508" y2="155" stroke="#e5c07b" stroke-width=".8" opacity=".5" marker-end="url(#arr3)"/>
+        <line x1="412" y1="145" x2="508" y2="82"  stroke="#e5c07b" stroke-width=".8" opacity=".5" marker-end="url(#arr3)"/>
+        <line x1="412" y1="145" x2="508" y2="155" stroke="#e5c07b" stroke-width=".8" opacity=".5" marker-end="url(#arr3)"/>
+
+        <!-- Output arrows -->
+        <line x1="552" y1="80"  x2="575" y2="80"  stroke="#98c379" stroke-width="1.2" marker-end="url(#arr3)"/>
+        <line x1="552" y1="155" x2="575" y2="155" stroke="#98c379" stroke-width="1.2" marker-end="url(#arr3)"/>
+
+        <!-- Weight label -->
+        <text x="160" y="200" fill="#5c6370" font-size="10" text-anchor="middle">W^[1]</text>
+        <text x="310" y="200" fill="#5c6370" font-size="10" text-anchor="middle">W^[2]</text>
+        <text x="460" y="200" fill="#5c6370" font-size="10" text-anchor="middle">W^[3]</text>
+      </svg>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Strongly vs Weakly Connected</div>
+    <ul>
+      <li><strong>Strongly connected:</strong> the weight value is large, but input might be zero → no actual activation.</li>
+      <li><strong>Weakly connected:</strong> input is one but weight is almost zero.</li>
+      <li>Adjusting weights properly allows the network to identify different patterns in the dataset.</li>
+    </ul>
+    <div class="callout note">
+      <span class="callout-icon">💡</span>
+      <span class="callout-text">If you adjust the weights of a neural network properly, you should be able to identify different patterns in the dataset. The network distinguishes patterns by activation of weight values and gives you different outputs.</span>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Sequence Modelling (RNN / LSTM)</div>
+    <ul>
+      <li>Language modelling uses feedforward networks where all features are given as one vector, <strong>or</strong> sequence models (RNNs, LSTMs).</li>
+      <li><strong>LSTMs</strong> are sequence modelling networks with feedback — they carry context across time steps.</li>
+      <li>Example: predicting the next word in "I am Subha Fernando" — feed "I", predict "am"; feed "am", predict "Subha"; etc.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ═══════════════ SECTION 9 ═══════════════ -->
+<section class="section" id="s9">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <span class="section-title">Training the Network</span>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Backpropagation</div>
+    <p><strong>Backpropagation</strong> (Backward Propagation of Errors) is the core algorithm for training ANNs. It computes the gradient of the loss function with respect to every weight using the <em>chain rule of calculus</em>, then updates weights via gradient descent.</p>
+    <div class="formula-box">
+      <span class="formula-label">// Weight update rule (gradient descent)</span>
+      <div class="formula">
+        w_new = w_old − η · (∂Loss / ∂w_old)<br>
+        b_new = b_old − η · (∂Loss / ∂b_old)<br><br>
+        w(t+1) = w(t) + Δw<br>
+        Δw     = −η · ∂E/∂w      (for regression: E = Σe²)<br><br>
+        Chain rule (single layer):<br>
+        ∂E/∂wᵢ = (∂E/∂o) · (∂o/∂z) · (∂z/∂w)
+      </div>
+      <div class="formula-note">η = learning rate (hyperparameter controlling step size)</div>
+    </div>
+
+    <ul>
+      <ol type="1" style="padding-left:20px;">
+        <li style="margin-bottom:8px;"><strong>Forward pass:</strong> compute output ŷ layer-by-layer using current weights.</li>
+        <li style="margin-bottom:8px;"><strong>Compute loss:</strong> E = Σ(y − ŷ)² (regression) or cross-entropy (classification).</li>
+        <li style="margin-bottom:8px;"><strong>Backward pass:</strong> apply chain rule from output layer back to input — compute ∂E/∂w for every weight.</li>
+        <li style="margin-bottom:8px;"><strong>Update weights:</strong> w ← w − η·∂E/∂w for all parameters.</li>
+      </ol>
+    </ul>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Gradient Descent Variants</div>
+    <div class="table-scroll">
+      <table>
+        <tr>
+          <th>Method</th>
+          <th>Batch Size</th>
+          <th>Update Frequency</th>
+          <th>Notes</th>
+        </tr>
+        <tr>
+          <td><strong>Full Batch GD</strong></td>
+          <td>All 1000 samples</td>
+          <td>Once per epoch</td>
+          <td>Stable but slow; memory-intensive</td>
+        </tr>
+        <tr>
+          <td><strong>Mini-Batch GD</strong></td>
+          <td>200 samples (e.g.)</td>
+          <td>5× per epoch (1000÷200)</td>
+          <td>Best trade-off; standard practice</td>
+        </tr>
+        <tr>
+          <td><strong>Online (Stochastic)</strong></td>
+          <td>1 sample</td>
+          <td>After every sample</td>
+          <td>Noisy but fast; update Δw immediately</td>
+        </tr>
+      </table>
+    </div>
+    <div class="callout tip">
+      <span class="callout-icon">✅</span>
+      <span class="callout-text"><strong>Epochs:</strong> One epoch = the full training dataset passed through the model once. If 5 epochs → iterate the full sample 5 times. Shuffling the dataset between epochs prevents the network from learning order dependencies.</span>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Early Stopping & Validation</div>
+    <div class="diagram-wrap">
+      <div class="diagram-title">// Training vs Validation error across epochs</div>
+      <svg viewBox="0 0 500 160" width="100%" xmlns="http://www.w3.org/2000/svg">
+        <line x1="40" y1="10" x2="40" y2="140" stroke="#252a38" stroke-width="1.5"/>
+        <line x1="40" y1="140" x2="480" y2="140" stroke="#252a38" stroke-width="1.5"/>
+        <!-- Training loss (decreasing) -->
+        <path d="M40,20 Q120,55 200,80 Q300,100 480,115" stroke="#5b8def" stroke-width="2" fill="none"/>
+        <text x="445" y="110" fill="#5b8def" font-size="10">Train</text>
+        <!-- Validation loss (U-shaped) -->
+        <path d="M40,30 Q100,60 180,80 Q250,90 310,95 Q360,98 400,102 Q440,108 480,130" stroke="#56b6c2" stroke-width="2" fill="none" stroke-dasharray="4,3"/>
+        <text x="445" y="128" fill="#56b6c2" font-size="10">Val</text>
+        <!-- Early stop marker -->
+        <line x1="320" y1="10" x2="320" y2="140" stroke="#e06c75" stroke-width="1.5" stroke-dasharray="4,3"/>
+        <text x="322" y="22" fill="#e06c75" font-size="10">Early Stop</text>
+        <!-- X-axis labels -->
+        <text x="40" y="155" fill="#5c6370" font-size="10" text-anchor="middle">1</text>
+        <text x="160" y="155" fill="#5c6370" font-size="10" text-anchor="middle">2</text>
+        <text x="280" y="155" fill="#5c6370" font-size="10" text-anchor="middle">3</text>
+        <text x="400" y="155" fill="#5c6370" font-size="10" text-anchor="middle">4</text>
+        <text x="260" y="168" fill="#5c6370" font-size="10" text-anchor="middle">epoch</text>
+        <text x="12" y="75" fill="#5c6370" font-size="10" text-anchor="middle" transform="rotate(-90,12,75)">loss</text>
+      </svg>
+    </div>
+    <ul>
+      <li>After each epoch, call the validation dataset (no weight updates — just predict).</li>
+      <li>If validation error starts increasing while training error decreases → <strong>overfitting begins</strong>.</li>
+      <li><strong>Early Stopping:</strong> stop training at the epoch where validation error is lowest.</li>
+      <li>At early stop: save weights (ω_sw), test on test set → final evaluation.</li>
+    </ul>
+    <div class="formula-box">
+      <span class="formula-label">// Training with validation loop</span>
+      <div class="formula">
+        Epoch 1:  train on mini-batch → update ω̂<br>
+                  validate with val data → compute val_err (no update)<br>
+        Epoch 2:  ω̂ = ω̂_old + Δω<br>
+                  re-apply val data → compare val_err<br>
+        ...<br>
+        Early stop when val_err increases<br>
+        → final test: ω_sw → ω̂_st → E_test
+      </div>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Input Shuffling</div>
+    <ul>
+      <li>After the first input x₁, adjust ω. Then comes x₂ — no dependency from x₁ to x₂ (fresh network).</li>
+      <li>We can shuffle training samples because inputs are independent of each other.</li>
+      <li>Shuffling during training breaks any independence/order between data points.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ═══════════════ SECTION 10 ═══════════════ -->
+<section class="section" id="s10">
+  <div class="section-header">
+    <span class="section-num">10</span>
+    <span class="section-title">Deep Learning Patterns & Summary</span>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Deep Learning Types: Overview</div>
+    <div class="card-grid">
+      <div class="card blue">
+        <div class="card-title">Deep Learning</div>
+        <div class="card-body">Multi-layer neural networks. Hidden layers learn increasingly abstract representations. Non-linearity introduced by activation functions in every hidden layer.</div>
+      </div>
+      <div class="card teal">
+        <div class="card-title">Fuzzy Learning</div>
+        <div class="card-body">Combines fuzzy logic with neural learning to handle imprecise/uncertain knowledge. Multi-valued reasoning.</div>
+      </div>
+      <div class="card yellow">
+        <div class="card-title">Statistical Learning</div>
+        <div class="card-body">Probability-based models. Bayesian learning, Gaussian processes. Knowledge represented as probability distributions.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Full Pipeline Summary</div>
+    <ol class="step-list">
+      <li><span class="step-num">1</span><div class="step-content"><strong>Define Problem</strong> — regression (continuous output) or classification (discrete labels).</div></li>
+      <li><span class="step-num">2</span><div class="step-content"><strong>Prepare Data</strong> — encode categorical variables, scale features (standardize / min-max), handle class imbalance, train/test split.</div></li>
+      <li><span class="step-num">3</span><div class="step-content"><strong>Initialize Weights</strong> — random small values (breaks symmetry so neurons learn differently).</div></li>
+      <li><span class="step-num">4</span><div class="step-content"><strong>Forward Pass</strong> — compute V = WX + b, then apply activation f(V) at each layer.</div></li>
+      <li><span class="step-num">5</span><div class="step-content"><strong>Compute Loss</strong> — E = Σe² (regression) or cross-entropy (classification).</div></li>
+      <li><span class="step-num">6</span><div class="step-content"><strong>Backpropagation</strong> — chain rule to compute ∂E/∂w for all weights, layer by layer (output → input).</div></li>
+      <li><span class="step-num">7</span><div class="step-content"><strong>Update Weights</strong> — w ← w − η·∂E/∂w. Repeat for each mini-batch / sample (stochastic).</div></li>
+      <li><span class="step-num">8</span><div class="step-content"><strong>Validate &amp; Early Stop</strong> — monitor validation error per epoch; stop when val_err begins rising.</div></li>
+      <li><span class="step-num">9</span><div class="step-content"><strong>Evaluate on Test Set</strong> — use saved weights (ω_sw) to compute final test metrics: accuracy, AUC-ROC, precision/recall.</div></li>
+    </ol>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Quick Reference — Key Formulas</div>
+    <div class="formula-box">
+      <span class="formula-label">// Master formula sheet</span>
+      <div class="formula">
+        ─── NEURON ───────────────────────────────────────────────<br>
+        V = WXᵀ + b       (linear combination with bias)<br>
+        y = f(V)          (apply activation function)<br><br>
+        ─── ACTIVATION FUNCTIONS ─────────────────────────────────<br>
+        Sigmoid:  σ(x) = 1/(1+e⁻ˣ)             range (0,1)<br>
+        Tanh:     tanh(x) = (eˣ−e⁻ˣ)/(eˣ+e⁻ˣ) range (−1,1)<br>
+        ReLU:     f(x) = max(0, x)              range [0,∞)<br>
+        Softmax:  σ(xᵢ) = eˣⁱ / Σeˣʲ           sums to 1<br>
+        Signum:   sgn(z) = +1 if z≥0, −1 else<br><br>
+        ─── LOSS FUNCTIONS ───────────────────────────────────────<br>
+        MSE / SSE (regression):    E = Σ(y − ŷ)²<br>
+        Delta / 0-1 (classif.):    e = δ(|ŷ − y|)<br><br>
+        ─── LEARNING / UPDATE ────────────────────────────────────<br>
+        Perceptron:  w(t+1) = w(t) + η[y(t) − ŷ(t)]x(t)<br>
+        Gradient GD: w_new  = w_old − η·(∂E/∂w)<br><br>
+        ─── FEATURE SCALING ──────────────────────────────────────<br>
+        Standardize: x̄ = (x − μ) / σ<br>
+        Min-Max:     x̄ = (x − min) / (max − min)
+      </div>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Common Pitfalls & Tips</div>
+    <div class="card-grid">
+      <div class="card red">
+        <div class="card-title">⚠ Vanishing Gradient</div>
+        <div class="card-body">Occurs with Sigmoid/Tanh in deep nets. Fix: use ReLU in hidden layers.</div>
+      </div>
+      <div class="card red">
+        <div class="card-title">⚠ Dying ReLU</div>
+        <div class="card-body">Neurons permanently outputting 0. Fix: Leaky ReLU, careful initialization.</div>
+      </div>
+      <div class="card yellow">
+        <div class="card-title">⚠ Overfitting</div>
+        <div class="card-body">Model memorises training data. Fix: early stopping, dropout, regularization, more data.</div>
+      </div>
+      <div class="card blue">
+        <div class="card-title">💡 Learning Rate</div>
+        <div class="card-body">Too large → overshoots minimum. Too small → very slow convergence. Use adaptive methods (Adam, RMSprop) for best results.</div>
+      </div>
+      <div class="card teal">
+        <div class="card-title">💡 Weight Init</div>
+        <div class="card-body">Always initialize randomly (not all zeros) to break symmetry — otherwise all neurons in a layer learn the same thing.</div>
+      </div>
+      <div class="card green">
+        <div class="card-title">💡 Shuffle Data</div>
+        <div class="card-body">Shuffle dataset between epochs. Breaks order-dependencies and helps the network generalize.</div>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+</main>
+
+<footer class="footer">
+  ANN Study Notes · Source: Handwritten Lecture Notes (227 pages, 2024–2025) · Supplemented with research on activation functions, backpropagation, and gradient descent algorithms
+</footer>
+
+</body>
+</html>
