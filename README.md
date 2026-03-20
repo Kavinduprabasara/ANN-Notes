@@ -15,6 +15,6 @@ This repository is configured to deploy automatically to GitHub Pages with GitHu
 
 After the first successful deployment, the site will be available at:
 
-`https://kavinduprabasara.github.io/ANN-Notes/`
+https://kavinduprabasara.github.io/ANN-Notes/
 
 changed to github action
